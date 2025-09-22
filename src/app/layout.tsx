@@ -1,31 +1,22 @@
-import { ThemeProviderWrapper } from "@/providers/themeProvider";
-import { WalletAdapterProvider } from "@/providers/walletAdapterProvider";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { UmiProvider } from "@/providers/umiProvider";
+import './globals.css';
+import { WalletProvider } from '@/components/providers/WalletProvider';
+import { UmiProvider } from '@/components/providers/UmiProvider';
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Metaplex Umi Next.js",
-  description: "Metaplex template for Next.js using Umi",
+export const metadata = {
+  title: 'NFT Minting Template',
+  description: 'Mint NFTs with UMI + Next.js + Tailwind',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <WalletAdapterProvider>
-      <UmiProvider>
-        <html lang="en">
-          <body className={inter.className}>
-            <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
-          </body>
-        </html>
-      </UmiProvider>
-    </WalletAdapterProvider>
+    <html lang="en">
+      <body>
+        <WalletProvider>
+          <UmiProvider>
+            {children}
+          </UmiProvider>
+        </WalletProvider>
+      </body>
+    </html>
   );
 }
