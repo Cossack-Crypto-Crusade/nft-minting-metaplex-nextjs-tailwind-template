@@ -37,3 +37,8 @@ next-env.d.ts
 
 # vscode
 .vscode
+
+
+.next
+node_modules
+pnpm-lock.yaml 
