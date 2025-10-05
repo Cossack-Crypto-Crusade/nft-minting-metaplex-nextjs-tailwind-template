@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tempo
+spec:
+  containers:
+    - name: tempo
+      image: grafana/tempo:latest
+      ports:
+        - containerPort: 3200
+      args:
+        - "--config.file=/etc/tempo/tempo.yaml"

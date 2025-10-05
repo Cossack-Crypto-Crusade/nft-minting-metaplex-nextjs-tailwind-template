@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: otel-collector
+spec:
+  containers:
+    - name: otel-collector
+      image: otel/opentelemetry-collector-contrib:latest
+      ports:
+        - containerPort: 4318
+      command:
+        - "/otelcontribcol"
+        - "--config=/etc/otel-collector-config.yaml"
+      volumeMounts:
+        - mountPath: /etc/otel-collector-config.yaml
+          name: otel-config
+          subPath: otel-local.yaml
+  volumes:
+    - name: otel-config
+      configMap:
+        name: otel-collector-config

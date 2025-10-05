@@ -1,61 +1,80 @@
-// src/hooks/useCandyMachine.ts
-import { useEffect, useState } from 'react'
-import useUmiStore from '@/store/useUmiStore'
-import { publicKey } from '@metaplex-foundation/umi/serializers' // if needed
+// hooks/useCandyMachine.ts
 
-type CMState = {
-  itemsAvailable?: number
-  itemsMinted?: number
-  itemsRemaining?: number
-  goLiveDate?: number | null
-  loading: boolean
-  error?: string
+import { useEffect, useState, useCallback } from "react";
+import { PublicKey } from "@solana/web3.js";
+import { fetchCandyMachine, CandyMachine } from "@metaplex-foundation/mpl-candy-machine";
+import { Umi } from "@metaplex-foundation/umi";  // or wherever Umi comes from in your setup
+
+interface UseCandyMachineResult {
+  loading: boolean;
+  error: Error | null;
+  candyMachine: CandyMachine | null;
+  itemsAvailable: number | null;
+  itemsRedeemed: number | null;
+  itemsRemaining: number | null;
 }
 
-const CANDY_MACHINE_ID = process.env.NEXT_PUBLIC_CANDY_MACHINE_ID // ensure set
+/**
+ * Hook to fetch a CandyMachine account’s state.
+ * @param umi Umi instance/context
+ * @param candyMachineId PublicKey (or string) of CandyMachine
+ */
+export function useCandyMachine(
+  umi: Umi | null,
+  candyMachineId: PublicKey | string | null
+): UseCandyMachineResult {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [candyMachine, setCandyMachine] = useState<CandyMachine | null>(null);
 
-export default function useCandyMachine() {
-  const umi = useUmiStore().umi
-  const [state, setState] = useState<CMState>({ loading: true })
+  const [itemsAvailable, setItemsAvailable] = useState<number | null>(null);
+  const [itemsRedeemed, setItemsRedeemed] = useState<number | null>(null);
+  const [itemsRemaining, setItemsRemaining] = useState<number | null>(null);
 
+  const fetchState = useCallback(async () => {
+    if (!umi || !candyMachineId) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const cm = await fetchCandyMachine(umi, candyMachineId);
+      setCandyMachine(cm);
+
+      // The CandyMachine object will have fields:
+      //   itemsAvailable, itemsRedeemed, etc.
+      const available = Number(cm.itemsAvailable);
+      const redeemed = Number(cm.itemsRedeemed);
+      const remaining = available - redeemed;
+
+      setItemsAvailable(available);
+      setItemsRedeemed(redeemed);
+      setItemsRemaining(remaining);
+
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+      setCandyMachine(null);
+      setItemsAvailable(null);
+      setItemsRedeemed(null);
+      setItemsRemaining(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [umi, candyMachineId]);
+
+  // Fetch initially and whenever dependencies change
   useEffect(() => {
-    let mounted = true
-    if (!umi) {
-      setState({ loading: false, error: 'Umi not initialized' })
-      return
-    }
-    if (!CANDY_MACHINE_ID) {
-      setState({ loading: false, error: 'CANDY_MACHINE_ID not set' })
-      return
-    }
+    fetchState();
+  }, [fetchState]);
 
-    const fetchState = async () => {
-      try {
-        // Replace this with the exact read mechanism for your candy machine version.
-        // Example: read account data via umi.rpc.getAccount or use metaplex client.
-        const account = await umi.rpc.getAccount(publicKey(CANDY_MACHINE_ID))
-        // parse the account.data -> extract itemsAvailable/itemsMinted
-        // The parsing depends on candy machine version: adapt to deserializer
-        const itemsAvailable = Number(/* parse from account.data */ 0)
-        const itemsMinted = Number(/* parse from account.data */ 0)
-        const itemsRemaining = itemsAvailable - itemsMinted
-
-        if (mounted) {
-          setState({ loading: false, itemsAvailable, itemsMinted, itemsRemaining })
-        }
-      } catch (err: any) {
-        if (mounted) setState({ loading: false, error: String(err) })
-      }
-    }
-
-    fetchState()
-    const interval = setInterval(fetchState, 10_000) // refresh every 10s
-
-    return () => {
-      mounted = false
-      clearInterval(interval)
-    }
-  }, [umi])
-
-  return state
+  return {
+    loading,
+    error,
+    candyMachine,
+    itemsAvailable,
+    itemsRedeemed,
+    itemsRemaining,
+  };
 }

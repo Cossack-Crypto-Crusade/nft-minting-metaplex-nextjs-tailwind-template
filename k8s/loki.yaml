@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: loki
+spec:
+  containers:
+    - name: loki
+      image: grafana/loki:latest
+      ports:
+        - containerPort: 3100
+      args:
+        - "-config.file=/etc/loki/loki-config.yaml"
