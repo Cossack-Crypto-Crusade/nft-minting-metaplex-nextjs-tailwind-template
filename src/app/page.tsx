@@ -2,9 +2,13 @@
 
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useUmi } from '@/components/providers/UmiProvider';
+import CandyMachineStatus from "@/components/CandyMachineStatus";
+
 
 export default function HomePage() {
   const umi = useUmi();
+  // replace with your actual Candy Machine public key
+  const candyMachineId = "YOUR_CANDY_MACHINE_PUBKEY";
 
   return (
     <main className="flex flex-col items-center justify-center h-screen gap-6 bg-gray-50">
@@ -12,6 +16,7 @@ export default function HomePage() {
         Wallet & UMI Test
       </h1>
 
+      <CandyMachineStatus candyMachineId={candyMachineId} />
       {/* Wallet connect UI */}
       <WalletMultiButton className="!bg-purple-600 !hover:bg-purple-700 !text-white !rounded-xl !px-4 !py-2" />
 
