@@ -20,10 +20,19 @@
             pkgs.docker
             pkgs.k3d
             pkgs.kubectl
+            # Build dependencies for native Node.js modules
+            pkgs.systemd.dev  # Provides libudev headers
+            pkgs.pkg-config
+            pkgs.python3
+            # make and gcc are provided by stdenv (included by mkShell)
           ];
 
           shellHook = ''
             export NODE_ENV=development
+            # Help node-gyp find system libraries
+            export PKG_CONFIG_PATH="${pkgs.systemd.dev}/lib/pkgconfig"
+            export CPPFLAGS="-I${pkgs.systemd.dev}/include"
+            export LDFLAGS="-L${pkgs.systemd.dev}/lib"
 
             # Create k3d cluster if it doesn't exist
             if ! k3d cluster list | grep -q nft-minting; then

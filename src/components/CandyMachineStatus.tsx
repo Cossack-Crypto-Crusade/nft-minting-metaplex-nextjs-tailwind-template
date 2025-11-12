@@ -1,14 +1,35 @@
-import React from "react";
-import { useCandyMachine } from "../hooks/useCandyMachine";
-import { useUmi } from "../context/umi";  // hypothetical hook to get Umi instance
+import React, { useMemo } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { useCandyMachine } from "../hooks/useCandyMachine";
+import { useUmi } from "./providers/UmiProvider";
 
 export function CandyMachineStatus({ cmId }: { cmId: string }) {
   const umi = useUmi();
+
+  const candyMachinePublicKey = useMemo(() => {
+    if (!cmId) {
+      return null;
+    }
+    try {
+      return new PublicKey(cmId);
+    } catch (err) {
+      console.warn("[CandyMachineStatus] Invalid candy machine id", err);
+      return null;
+    }
+  }, [cmId]);
+
   const { loading, error, itemsAvailable, itemsRedeemed, itemsRemaining } = useCandyMachine(
     umi,
-    new PublicKey(cmId)
+    candyMachinePublicKey
   );
+
+  if (!cmId) {
+    return <div>Please provide a Candy Machine address to display its status.</div>;
+  }
+
+  if (!candyMachinePublicKey) {
+    return <div>Invalid Candy Machine address. Double-check the configured public key.</div>;
+  }
 
   if (loading) {
     return <div>Loading candy machine data…</div>;
